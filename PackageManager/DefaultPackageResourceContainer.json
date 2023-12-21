@@ -1,0 +1,94 @@
+﻿{
+  // Unity Package 타이틀 이름
+  "PackageTitle": "패키지 타이틀을 입력해 주세요.",
+  // Unity Package Source의 DLL 빌드용 메소드
+  "BuildSourceMethod": "빌드할 메소드의 FullName을 입력해 주세요.",
+  // Unity Sync GUID 메소드
+  "SyncGUIDMethod": "GUID Synchronize 메소드의 FullName을 입력해 주세요.",
+  // Unity 실행 파일 디렉토리
+  "UnityEditorDirectory": "에디터 경로를 입력해 주세요.",
+  // Unity Package 프로젝트 디렉토리
+  "PackageProjectDirectory": "프로젝트 경로를 입력해 주세요.",
+  // Unity Package가 구성된 패키지 경로
+  "PackageDirectory": "배포할 패키지 경로를 입력해 주세요.",
+  // Unity Package가 구성된 패키지를 타겟으로 테스트할 Unity 테스트 프로젝트
+  "SimulationProjectDirectory": "패키지 시뮬레이션 프로젝트 경로를 입력해 주세요.",
+  // 패키지를 구성할 파일 콘텐츠 중, 복사 대상들
+  "PackageContent": [
+    {
+      "Name": "Content1",
+      "ContentType": "Runtime",
+      "CopyForce": true,
+      "Targets": [
+        "Content1.Runtime1.dll",
+        "Content1.Runtime2.dll",
+        "Content1.Runtime3.dll"
+      ]
+    },
+    {
+      "Name": "Content2",
+      "ContentType": "Runtime",
+      "CopyForce": false,
+      "Targets": [
+        "Content2.Runtime1.dll",
+        "Content2.Runtime2.dll",
+        "Content2.Runtime3.dll"
+      ]
+    },
+    {
+      "Name": "Content3",
+      "ContentType": "Editor",
+      "CopyForce": true,
+      "Targets": [
+        "Content3.Editor1.dll",
+        "Content3.Editor2.dll",
+        "Content3.Editor3.dll"
+      ]
+    },
+    {
+      "Name": "Content4",
+      "ContentType": "Editor",
+      "CopyForce": false,
+      "Targets": [
+        "Content4.Editor1.dll",
+        "Content4.Editor2.dll",
+        "Content4.Editor3.dll"
+      ]
+    },
+    {
+      "Name": "Content5",
+      "ContentType": "Sample",
+      "CopyForce": true,
+      "Targets": [
+        "Assets/Samples/Sample1 >>> Assets/Samples/Sample1",
+        "Assets/Samples/Sample2 >>> Assets/Samples/Sample2",
+        "Assets/Samples/Sample3 >>> Assets/Samples/Sample3"
+      ]
+    },
+    {
+      "Name": "Content6",
+      "ContentType": "Package",
+      "CopyForce": true,
+      "Targets": [
+        "package.json >>> package.json",
+        "package.json.meta >>> package.json.meta",
+        "CHANGELOG.md >>> CHANGELOG.md",
+        "CHANGELOG.md.meta >>> CHANGELOG.md.meta",
+        "LICENSE.md >>> LICENSE.md",
+        "LICENSE.md.meta >>> LICENSE.md.meta",
+        "README.md >>> README.md",
+        "README.md.meta >>> README.md.meta",
+        "Third Party Notices.md >>> Third Party Notices.md",
+        "Third Party Notices.md.meta >>> Third Party Notices.md.meta"
+      ]
+    }
+  ],
+  // GUID를 Sync할 대상 콘텐츠
+  "GUIDSyncTargets": {
+    "Start": "projectGUIDs.json",
+    "Destination": "packageGUIDs.json",
+    "TargetNames": [
+
+    ]
+  }
+}
