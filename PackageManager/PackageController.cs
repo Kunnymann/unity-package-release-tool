@@ -43,6 +43,27 @@ namespace PackageManager
 
         public PackageResourceContainer PackageResourceContainer => this.packageResourceContainer;
 
+        public PackageController()
+        {
+            this.packageResourceContainer = new PackageResourceContainer()
+            {
+                UnityEditorDirectory = "Set your unity editor directory",
+                PackageProjectDirectory = "Set your package project directory",
+                PackageDirectory = "Set your package directory",
+                SimulationProjectDirectory = "Set your simulation project directory",
+                PackageTitle = "Set your package title",
+                BuildSourceMethod = "uprt.editor.UPRTPackageManager.BuildWin64",
+                SyncGUIDMethod = "uprt.editor.UPRTPackageManager.GetGUIDs",
+                PackageContent = new List<Content>(),
+                GUIDSyncTargets = new GUIDSyncTargets()
+                {
+                    Start = "projectGUIDs.json",
+                    Destination = "packageGUIDs.json",
+                    TargetNames = new List<string>()
+                }
+            };
+        }
+
         public PackageController(string configPath)
         {
             if (string.IsNullOrEmpty(configPath))
@@ -61,23 +82,22 @@ namespace PackageManager
 
         public async Task StartPackageAsync(CancellationToken token)
         {
+            if (await BuildUnitySource(token) == FAIL_CODE) return;
             if (token.IsCancellationRequested) return;
-            await BuildUnitySource(token);
 
+            if (await GetSyncGUIDs(token) == FAIL_CODE) return;
             if (token.IsCancellationRequested) return;
-            await GetSyncGUIDs(token);
 
+            if (await CopyPackageItems(token) == FAIL_CODE) return;
             if (token.IsCancellationRequested) return;
-            await CopyPackageItems(token);
 
+            if (await GetSimulateSyncGUIDs(token) == FAIL_CODE) return;
             if (token.IsCancellationRequested) return;
-            await GetSimulateSyncGUIDs(token);
 
+            if (await SyncGUID(token) == FAIL_CODE) return;
             if (token.IsCancellationRequested) return;
-            await SyncGUID(token);
 
-            if (token.IsCancellationRequested) return;
-            await CopySampleItems(token);
+            if (await CopySampleItems(token) == FAIL_CODE) return;
         }
 
         public void SaveResourceContainer(string path)
@@ -120,11 +140,10 @@ namespace PackageManager
                 }
             });
 
-            process.Start();
-            process.BeginOutputReadLine();
-            
             try
             {
+                process.Start();
+                process.BeginOutputReadLine();
                 await Task.Run(() => process.WaitForExit());
                 SendLogToPackageTool($"Build project source : {GetJobResult(process.ExitCode)}");
                 return process.ExitCode;
@@ -171,11 +190,10 @@ namespace PackageManager
                 }
             });
 
-            process.Start();
-            process.BeginOutputReadLine();
-
             try
             {
+                process.Start();
+                process.BeginOutputReadLine();
                 await Task.Run(() => process.WaitForExit());
                 SendLogToPackageTool($"Collect package project GUIDs : {GetJobResult(process.ExitCode)}");
                 return process.ExitCode;
@@ -295,11 +313,10 @@ namespace PackageManager
                 }
             });
 
-            process.Start();
-            process.BeginOutputReadLine();
-
             try
             {
+                process.Start();
+                process.BeginOutputReadLine();
                 await Task.Run(() => process.WaitForExit());
                 SendLogToPackageTool($"Unity simulation project synchronize GUIDs : {GetJobResult(process.ExitCode)}");
                 return process.ExitCode;

@@ -259,6 +259,12 @@ namespace PackageTool
             }
         }
 
+        private void CreateNewSettingButton_Click(object sender, EventArgs e)
+        {
+            this.packageController = new PackageController();
+            LoadPackageControllerProperties();
+        }
+
         private void LoadSettingButton_Click(object sender, EventArgs e)
         {
             string jsonPath = null;

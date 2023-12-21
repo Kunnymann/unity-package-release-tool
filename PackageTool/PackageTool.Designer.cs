@@ -64,6 +64,7 @@
             this.columnLogHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.StartPackagingButton = new System.Windows.Forms.Button();
             this.StopPackagingButton = new System.Windows.Forms.Button();
+            this.CreateNewSettingButton = new System.Windows.Forms.Button();
             this.UnityProcessSettingGroup.SuspendLayout();
             this.PackagePropertyGroup.SuspendLayout();
             this.SuspendLayout();
@@ -199,6 +200,7 @@
             // 
             // PackagePropertyGroup
             // 
+            this.PackagePropertyGroup.Controls.Add(this.CreateNewSettingButton);
             this.PackagePropertyGroup.Controls.Add(this.ContentListBox);
             this.PackagePropertyGroup.Controls.Add(this.LoadSettingButton);
             this.PackagePropertyGroup.Controls.Add(this.SaveSettingButton);
@@ -428,6 +430,16 @@
             this.StopPackagingButton.UseVisualStyleBackColor = true;
             this.StopPackagingButton.Click += new System.EventHandler(this.StopPackagingButton_Click);
             // 
+            // CreateNewSettingButton
+            // 
+            this.CreateNewSettingButton.Location = new System.Drawing.Point(336, 328);
+            this.CreateNewSettingButton.Name = "CreateNewSettingButton";
+            this.CreateNewSettingButton.Size = new System.Drawing.Size(124, 23);
+            this.CreateNewSettingButton.TabIndex = 7;
+            this.CreateNewSettingButton.Text = "Create new setting";
+            this.CreateNewSettingButton.UseVisualStyleBackColor = true;
+            this.CreateNewSettingButton.Click += new System.EventHandler(this.CreateNewSettingButton_Click);
+            // 
             // PackageTool
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
@@ -487,6 +499,7 @@
         private System.Windows.Forms.ColumnHeader columnLogHeader;
         private System.Windows.Forms.Button StartPackagingButton;
         private System.Windows.Forms.Button StopPackagingButton;
+        private System.Windows.Forms.Button CreateNewSettingButton;
     }
 }
 
