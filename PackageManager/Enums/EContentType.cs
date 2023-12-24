@@ -5,6 +5,7 @@
         Runtime, // Runtime code
         Editor,  // Editor code
         Sample,  // Sample code & resources
-        Package  // Package resources
+        Package, // Package resources
+        Simulator,  // Custom resources
     }
 }

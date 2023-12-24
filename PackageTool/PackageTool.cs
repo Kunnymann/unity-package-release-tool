@@ -13,6 +13,7 @@ using System.Diagnostics;
 using PackageManager.Models;
 using System.IO;
 using System.Threading;
+using System.IO.Packaging;
 
 namespace PackageTool
 {
@@ -22,7 +23,6 @@ namespace PackageTool
         public static PackageTool Instance => instance;
 
         private PackageController packageController;
-        private Task packagingTask;
         private CancellationTokenSource tokenSource;
         private bool isPackageRunning = false;
         private bool IsPackageRunning
@@ -40,8 +40,11 @@ namespace PackageTool
                     this.SimulationProjectDirectoryButton.Enabled = false;
                     this.PackageDirectoryButton.Enabled = false;
                     this.StartPackagingButton.Enabled = false;
+                    this.CreateNewSettingButton.Enabled = false;
                     this.LoadSettingButton.Enabled = false;
                     this.SaveSettingButton.Enabled = false;
+                    this.UseDefaultBuildSourceMethodCheckBox.Enabled = false;
+                    this.UseDefaultSyncGUIDMethodCheckBox.Enabled = false;
                 }
                 else
                 {
@@ -53,8 +56,11 @@ namespace PackageTool
                     this.SimulationProjectDirectoryButton.Enabled = true;
                     this.PackageDirectoryButton.Enabled = true;
                     this.StartPackagingButton.Enabled = true;
+                    this.CreateNewSettingButton.Enabled = true;
                     this.LoadSettingButton.Enabled = true;
                     this.SaveSettingButton.Enabled = true;
+                    this.UseDefaultBuildSourceMethodCheckBox.Enabled = true;
+                    this.UseDefaultSyncGUIDMethodCheckBox.Enabled = true;
                 }
                 isPackageRunning = value;
             }
@@ -66,7 +72,7 @@ namespace PackageTool
             instance = this;
         }
 
-        public void Update()
+        public void UpdatePackageToolContent()
         {
             UpdateContentListBox(true);
         }
@@ -82,28 +88,58 @@ namespace PackageTool
 
         private void UnityEditorDirectoryField_TextChanged(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
 
+            this.packageController.PackageResourceContainer.UnityEditorDirectory = UnityEditorDirectoryField.Text;
         }
 
         private void PackageProjectDirectoryField_TextChanged(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
 
+            this.packageController.PackageResourceContainer.PackageProjectDirectory = PackageProjectDirectoryField.Text;
         }
 
         private void PackageDirectoryField_TextChanged(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
 
+            this.packageController.PackageResourceContainer.PackageDirectory = PackageDirectoryField.Text;
         }
 
         private void SimulationProjectDirectoryField_TextChanged(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
 
+            this.packageController.PackageResourceContainer.SimulationProjectDirectory = SimulationProjectDirectoryField.Text;
         }
 
         // Button
 
         private void UnityEditorDirectoryButton_Click(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
+
             string unityEditorPath = null;
 
             OpenFileDialog dialog = new OpenFileDialog()
@@ -115,12 +151,17 @@ namespace PackageTool
             {
                 unityEditorPath = dialog.FileName;
                 UnityEditorDirectoryField.Text = unityEditorPath;
-                this.packageController.PackageResourceContainer.UnityEditorDirectory = unityEditorPath;
             }
         }
 
         private void PackageProjectDirectoryButton_Click(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
+
             string packageProjectPath = null;
 
             CommonOpenFileDialog dialog = new CommonOpenFileDialog()
@@ -133,12 +174,17 @@ namespace PackageTool
             {
                 packageProjectPath = dialog.FileName;
                 this.PackageProjectDirectoryField.Text = packageProjectPath;
-                this.packageController.PackageResourceContainer.PackageProjectDirectory = packageProjectPath;
             }
         }
 
         private void PackageDirectoryButton_Click(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
+
             string packagePath = null;
 
             CommonOpenFileDialog dialog = new CommonOpenFileDialog()
@@ -151,12 +197,17 @@ namespace PackageTool
             {
                 packagePath = dialog.FileName;
                 this.PackageDirectoryField.Text = packagePath;
-                this.packageController.PackageResourceContainer.PackageDirectory = packagePath;
             }
         }
 
         private void SimulationProjectDirectoryButton_Click(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
+
             string simulationProjectPath = null;
 
             CommonOpenFileDialog dialog = new CommonOpenFileDialog()
@@ -169,7 +220,6 @@ namespace PackageTool
             {
                 simulationProjectPath = dialog.FileName;
                 this.SimulationProjectDirectoryField.Text = simulationProjectPath;
-                this.packageController.PackageResourceContainer.SimulationProjectDirectory = simulationProjectPath;
             }
         }
 
@@ -179,17 +229,75 @@ namespace PackageTool
 
         private void PackageTitleField_TextChanged(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
+
             this.packageController.PackageResourceContainer.PackageTitle = this.PackageTitleField.Text;
         }
 
         private void BuildSourceMethodField_TextChanged(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
+
             this.packageController.PackageResourceContainer.BuildSourceMethod = this.BuildSourceMethodField.Text;
+        }
+
+        private void UseDefaultBuildSourceMethodCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
+
+            if (UseDefaultBuildSourceMethodCheckBox.Checked)
+            {
+                this.BuildSourceMethodField.Enabled = false;
+                this.BuildSourceMethodField.Text = PackageController.DEFAULT_BUILD_METHOD;
+            }
+            else
+            {
+                this.BuildSourceMethodField.Enabled = true;
+                this.BuildSourceMethodField.Text = "";
+            }
         }
 
         private void SyncGUIDMethodField_TextChanged(object sender, EventArgs e)
         {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
+
             this.packageController.PackageResourceContainer.SyncGUIDMethod = this.SyncGUIDMethodField.Text;
+        }
+
+        private void UseDefaultSyncGUIDMethodCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (this.packageController == null || this.packageController.PackageResourceContainer == null)
+            {
+                MessageBox.Show("Please load package setting or create new one first.");
+                return;
+            }
+
+            if (UseDefaultSyncGUIDMethodCheckBox.Checked)
+            {
+                this.SyncGUIDMethodField.Enabled = false;
+                this.SyncGUIDMethodField.Text = PackageController.DEFAULT_SYNC_GUID_METHOD;
+            }
+            else
+            {
+                this.SyncGUIDMethodField.Enabled = true;
+                this.SyncGUIDMethodField.Text = "";
+            }
         }
 
         private void ContentTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -220,7 +328,7 @@ namespace PackageTool
         {
             if (this.packageController == null || this.packageController.PackageResourceContainer == null)
             {
-                MessageBox.Show("Please load package setting first.");
+                MessageBox.Show("Please load package setting or create new one first.");
                 return;
             }
 
@@ -232,7 +340,7 @@ namespace PackageTool
         {
             if (this.packageController == null || this.packageController.PackageResourceContainer == null)
             {
-                MessageBox.Show("Please load package setting first.");
+                MessageBox.Show("Please load package setting or create new one first.");
                 return;
             }
 
@@ -297,7 +405,7 @@ namespace PackageTool
         {
             if (this.packageController == null || this.packageController.PackageResourceContainer == null)
             {
-                MessageBox.Show("Please load package setting first.");
+                MessageBox.Show("Please load package setting or create new one first.");
                 return;
             }
 
@@ -321,7 +429,7 @@ namespace PackageTool
         {
             if (this.packageController == null || this.packageController.PackageResourceContainer == null)
             {
-                MessageBox.Show("Please load package setting first.");
+                MessageBox.Show("Please load package setting or create new one first.");
                 return;
             }
 
@@ -333,8 +441,6 @@ namespace PackageTool
             else
             {
                 StopPackaging();
-                //this.packageController.LogEvent -= AddLog;
-                //this.packageController.LogErrorEvent -= AddErrorLog;
                 IsPackageRunning = false;
             }
         }
@@ -343,7 +449,7 @@ namespace PackageTool
         {
             if (this.packageController == null || this.packageController.PackageResourceContainer == null)
             {
-                MessageBox.Show("Please load package setting first.");
+                MessageBox.Show("Please load package setting or create new one first.");
                 return;
             }
 
@@ -365,6 +471,8 @@ namespace PackageTool
             this.PackageTitleField.Text = packageController.PackageResourceContainer.PackageTitle;
             this.BuildSourceMethodField.Text = packageController.PackageResourceContainer.BuildSourceMethod;
             this.SyncGUIDMethodField.Text = packageController.PackageResourceContainer.SyncGUIDMethod;
+            this.UseDefaultBuildSourceMethodCheckBox.Enabled = true;
+            this.UseDefaultSyncGUIDMethodCheckBox.Enabled = true;
 
             this.ContentTypeComboBox.DataSource = Enum.GetValues(typeof(PackageManager.Enums.ContentType));
 
@@ -403,7 +511,7 @@ namespace PackageTool
 
             IsPackageRunning = true;
 
-            await Task.Run(() => this.packageController.StartPackageAsync(token));
+            await Task.Run(() => this.packageController.StartPackageAsync(this.UseDefaultBuildSourceMethodCheckBox.Checked, this.UseDefaultSyncGUIDMethodCheckBox.Checked,token));
 
             this.packageController.LogEvent -= AddLog;
             this.packageController.LogErrorEvent -= AddErrorLog;
@@ -444,7 +552,6 @@ namespace PackageTool
                 this.LogViewer.EnsureVisible(this.LogViewer.Items.Count - 1);
             }
         }
-
         #endregion
     }
 }

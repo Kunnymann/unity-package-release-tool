@@ -7,7 +7,7 @@ namespace PackageManager
 {
     public partial class PackageController
     {
-        void RuntimeCopier(string[] fileNames, bool force = true)
+        void CopyRuntimeToPackage(string[] fileNames, bool force = true)
         {
             string projectPath = Path.Combine(packageResourceContainer.PackageProjectDirectory, BUILDED_ASSEMBLIES_DIR);
             string publishPath = Path.Combine(packageResourceContainer.PackageDirectory, RUNTIME_PUBLISH_DIR);
@@ -20,7 +20,7 @@ namespace PackageManager
             }
         }
 
-        void EditorCopier(string[] fileNames, bool force = true)
+        void CopyEditorToPackage(string[] fileNames, bool force = true)
         {
             string projectPath = Path.Combine(packageResourceContainer.PackageProjectDirectory, SCRIPT_ASSEMBLIES_DIR);
             string publishPath = Path.Combine(packageResourceContainer.PackageDirectory, EDITOR_PUBLISH_DIR);
@@ -33,7 +33,22 @@ namespace PackageManager
             }
         }
 
-        void SampleCopier(string[] fileNames, bool force = true)
+        void CopyProjectToSimulator(string[] fileNames, bool force = true)
+        {
+            foreach (var item in fileNames)
+            {
+                string[] components = Regex.Split(item, TARGET_PARSER);
+
+                if (components.Length != 2) throw new FormatException($"The file ({item}) is not formatted properly");
+
+                string target = Path.Combine(packageResourceContainer.PackageProjectDirectory, components[0]);
+                string publish = Path.Combine(packageResourceContainer.SimulationProjectDirectory, components[1]);
+
+                CopyUtility.Copy(target, publish, force, SendLogToPackageTool);
+            }
+        }
+
+        void CopySimulatorToPackage(string[] fileNames, bool force = true)
         {
             foreach (var item in fileNames)
             {
@@ -48,7 +63,7 @@ namespace PackageManager
             }
         }
 
-        void PackageCopier(string[] fileNames, bool force = true)
+        void CopyProjectPackageToPackage(string[] fileNames, bool force = true)
         {
             foreach (var item in fileNames)
             {

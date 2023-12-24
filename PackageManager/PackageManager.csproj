@@ -46,6 +46,8 @@
     <Compile Include="Models\PackageResourceContainer.cs" />
     <Compile Include="PackageController.Copier.cs" />
     <Compile Include="PackageController.cs" />
+    <Compile Include="PackageController.Injector.cs" />
+    <Compile Include="PackageController.InjectorSource.cs" />
     <Compile Include="Utility\CopyUtility.cs" />
   </ItemGroup>
   <ItemGroup />

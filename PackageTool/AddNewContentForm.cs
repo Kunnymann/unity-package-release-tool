@@ -78,7 +78,7 @@ namespace PackageTool
             };
 
             this.packageResourceContainer.PackageContent.Add(content);
-            PackageTool.Instance.Update();
+            PackageTool.Instance.UpdatePackageToolContent();
             this.Close();
         }
 

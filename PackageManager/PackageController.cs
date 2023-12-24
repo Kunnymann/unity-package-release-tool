@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
+using Newtonsoft.Json.Linq;
 
 namespace PackageManager
 {
     public partial class PackageController
     {
-        static readonly string[] GUIDSyncExtensions =
+        private static readonly string[] GUIDSyncExtensions =
         {
             "*.unity",
             "*.asset",
@@ -21,25 +22,32 @@ namespace PackageManager
             "*.anim"
         };
 
-        const int SUCCESS_CODE = 0;
-        const int FAIL_CODE = 1;
+        private const int SUCCESS_CODE = 0;
+        private const int FAIL_CODE = 1;
 
-        const string PACKAGES_DIR = "Packages";
-        const string SCRIPT_ASSEMBLIES_DIR = "Library/ScriptAssemblies";
-        const string BUILDED_ASSEMBLIES_DIR = "Build/Build_Data/Managed";
+        private const string PACKAGES_DIR = "Packages";
+        private const string SCRIPT_ASSEMBLIES_DIR = "Library/ScriptAssemblies";
+        private const string BUILDED_ASSEMBLIES_DIR = "Build/Build_Data/Managed";
 
-        const string RUNTIME_PUBLISH_DIR = "Runtime/Plugins";
-        const string EDITOR_PUBLISH_DIR = "Editor/Plugins";
+        private const string PACKAGE_JSON_NAME_KEY = "name";
+        private const string PACKAGE_MANIFEST_DEPENDENCIES_KEY = "dependencies";
 
-        const string TARGET_PARSER = @"\s*>>>\s*";
+        private const string RUNTIME_PUBLISH_DIR = "Runtime/Plugins";
+        private const string EDITOR_PUBLISH_DIR = "Editor/Plugins";
+
+        private const string TARGET_PARSER = @"\s*>>>\s*";
+
+        public const string DEFAULT_BUILD_METHOD = "uprt.editor.UPRTPackageManager.BuildWin64";
+        public const string DEFAULT_SYNC_GUID_METHOD = "uprt.editor.UPRTPackageManager.GetGUIDs";
 
         public event EventHandler<string> LogEvent;
         public event EventHandler<string> LogErrorEvent;
 
-        PackageResourceContainer packageResourceContainer;
+        private PackageResourceContainer packageResourceContainer;
+        private string packageName;
 
-        UnityAssetGUID[] publishPackageAssetGUIDs;
-        UnityAssetGUID[] publishProjectAssetGUIDs;
+        private UnityAssetGUID[] publishPackageAssetGUIDs;
+        private UnityAssetGUID[] publishProjectAssetGUIDs;
 
         public PackageResourceContainer PackageResourceContainer => this.packageResourceContainer;
 
@@ -52,8 +60,8 @@ namespace PackageManager
                 PackageDirectory = "Set your package directory",
                 SimulationProjectDirectory = "Set your simulation project directory",
                 PackageTitle = "Set your package title",
-                BuildSourceMethod = "uprt.editor.UPRTPackageManager.BuildWin64",
-                SyncGUIDMethod = "uprt.editor.UPRTPackageManager.GetGUIDs",
+                BuildSourceMethod = DEFAULT_BUILD_METHOD,
+                SyncGUIDMethod = DEFAULT_SYNC_GUID_METHOD,
                 PackageContent = new List<Content>(),
                 GUIDSyncTargets = new GUIDSyncTargets()
                 {
@@ -80,24 +88,35 @@ namespace PackageManager
             this.packageResourceContainer = JsonConvert.DeserializeObject<PackageResourceContainer>(configJson);
         }
 
-        public async Task StartPackageAsync(CancellationToken token)
+        public async Task StartPackageAsync(bool useDefaultBuildCode, bool useDefaultSyncCode, CancellationToken token)
         {
-            if (await BuildUnitySource(token) == FAIL_CODE) return;
+            packageName = string.Empty;
+
+            if (await GetPackageName() == FAIL_CODE) return;
             if (token.IsCancellationRequested) return;
 
-            if (await GetSyncGUIDs(token) == FAIL_CODE) return;
+            if (await BuildUnitySource(useDefaultBuildCode, token) == FAIL_CODE) return;
+            if (token.IsCancellationRequested) return;
+
+            if (await GetSyncGUIDs(useDefaultSyncCode, token) == FAIL_CODE) return;
             if (token.IsCancellationRequested) return;
 
             if (await CopyPackageItems(token) == FAIL_CODE) return;
             if (token.IsCancellationRequested) return;
 
-            if (await GetSimulateSyncGUIDs(token) == FAIL_CODE) return;
+            if (await InitSimulateProject(token) == FAIL_CODE) return;
+            if (token.IsCancellationRequested) return;
+
+            if (await GetSimulateSyncGUIDs(useDefaultSyncCode, token) == FAIL_CODE) return;
             if (token.IsCancellationRequested) return;
 
             if (await SyncGUID(token) == FAIL_CODE) return;
             if (token.IsCancellationRequested) return;
 
             if (await CopySampleItems(token) == FAIL_CODE) return;
+            if (token.IsCancellationRequested) return;
+
+            SendLogToPackageTool("Success to build package");
         }
 
         public void SaveResourceContainer(string path)
@@ -106,8 +125,24 @@ namespace PackageManager
             File.WriteAllText(path, json);
         }
 
-        // 개같은 켄셀레이션토큰 잡아볼 것
-        public async Task<int> BuildUnitySource(CancellationToken token)
+        public async Task<int> GetPackageName()
+        {
+            try
+            {
+                string jsonText = await Task<string>.Run(() => File.ReadAllText(Path.Combine(this.packageResourceContainer.PackageProjectDirectory, PACKAGES_DIR, this.packageResourceContainer.PackageTitle, "package.json")));
+                JToken targetValue = JObject.Parse(jsonText).GetValue(PACKAGE_JSON_NAME_KEY);
+                packageName = targetValue.ToString();
+                SendLogToPackageTool("Success to collect package name");
+                return SUCCESS_CODE;
+            }
+            catch(Exception e)
+            {
+                SendLogErrorToPackageTool($"Fail to collect package name ({e.Message})");
+                return FAIL_CODE;
+            }
+        }
+
+        public async Task<int> BuildUnitySource(bool useDefaultBuildCode, CancellationToken token)
         {
             SendLogToPackageTool("Build project source : Start");
 
@@ -125,6 +160,7 @@ namespace PackageManager
                     UseShellExecute = false
                 },
             };
+
             process.OutputDataReceived += Process_OutputDataReceived;
             process.EnableRaisingEvents = true;
 
@@ -142,10 +178,26 @@ namespace PackageManager
 
             try
             {
+                if (useDefaultBuildCode)
+                {
+                    await Task.Run(() => InjectCode(Path.Combine(this.packageResourceContainer.PackageProjectDirectory,
+                        DEFAULT_SOURCE_INJECTION_DIR,
+                        DEFAULT_BUILD_SOURCE_FILENAME), this.defaultBuildSourceCode));
+                }
+
                 process.Start();
                 process.BeginOutputReadLine();
                 await Task.Run(() => process.WaitForExit());
-                SendLogToPackageTool($"Build project source : {GetJobResult(process.ExitCode)}");
+
+                if (process.ExitCode == FAIL_CODE)
+                {
+                    SendLogErrorToPackageTool($"Build project source : {GetJobResult(process.ExitCode)}");
+                }
+                else
+                {
+                    SendLogToPackageTool($"Build project source : {GetJobResult(process.ExitCode)}");
+                }
+
                 return process.ExitCode;
             }
             catch (Exception e)
@@ -155,7 +207,7 @@ namespace PackageManager
             }
         }
 
-        public async Task<int> GetSyncGUIDs(CancellationToken token)
+        public async Task<int> GetSyncGUIDs(bool useDefaultSyncCode, CancellationToken token)
         {
             SendLogToPackageTool("Collect package project GUIDs : Start");
 
@@ -192,10 +244,26 @@ namespace PackageManager
 
             try
             {
+                if (useDefaultSyncCode)
+                {
+                    await Task.Run(() => InjectCode(Path.Combine(this.packageResourceContainer.PackageProjectDirectory,
+                        DEFAULT_SOURCE_INJECTION_DIR,
+                        DEFAULT_SYNC_SOURCE_FILENAME), this.defaultSyncSourceCode));
+                }
+
                 process.Start();
                 process.BeginOutputReadLine();
                 await Task.Run(() => process.WaitForExit());
-                SendLogToPackageTool($"Collect package project GUIDs : {GetJobResult(process.ExitCode)}");
+
+                if (process.ExitCode == FAIL_CODE)
+                {
+                    SendLogErrorToPackageTool($"Collect package project GUIDs : {GetJobResult(process.ExitCode)}");
+                }
+                else
+                {
+                    SendLogToPackageTool($"Collect package project GUIDs : {GetJobResult(process.ExitCode)}");
+                }
+                
                 return process.ExitCode;
             }
             catch (Exception e)
@@ -217,13 +285,16 @@ namespace PackageManager
                     switch (item.ContentType)
                     {
                         case Enums.ContentType.Runtime:
-                            await Task.Run(() => RuntimeCopier(item.Targets, item.CopyForce));
+                            await Task.Run(() => CopyRuntimeToPackage(item.Targets, item.CopyForce));
                             break;
                         case Enums.ContentType.Editor:
-                            await Task.Run(() => EditorCopier(item.Targets, item.CopyForce));
+                            await Task.Run(() => CopyEditorToPackage(item.Targets, item.CopyForce));
                             break;
                         case Enums.ContentType.Package:
-                            await Task.Run(() => PackageCopier(item.Targets, item.CopyForce));
+                            await Task.Run(() => CopyProjectPackageToPackage(item.Targets, item.CopyForce));
+                            break;
+                        case Enums.ContentType.Simulator:
+                            await Task.Run(() => CopyProjectToSimulator(item.Targets, item.CopyForce));
                             break;
                         default:
                             break;
@@ -257,7 +328,7 @@ namespace PackageManager
                     switch (item.ContentType)
                     {
                         case Enums.ContentType.Sample:
-                            await Task.Run(() => SampleCopier(item.Targets, item.CopyForce));
+                            await Task.Run(() => CopySimulatorToPackage(item.Targets, item.CopyForce));
                             break;
                         default:
                             break;
@@ -280,7 +351,66 @@ namespace PackageManager
             }
         }
 
-        public async Task<int> GetSimulateSyncGUIDs(CancellationToken token)
+        public async Task<int> InitSimulateProject(CancellationToken token)
+        {
+            SendLogToPackageTool("Initialize simulation project : Start");
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    if (!File.Exists(Path.Combine(this.packageResourceContainer.SimulationProjectDirectory, PACKAGES_DIR, "manifest.json")))
+                    {
+                        throw new FileNotFoundException("Can't not found manifest.json in simulation project");
+                    }
+
+                    string jsonText = File.ReadAllText(Path.Combine(this.packageResourceContainer.SimulationProjectDirectory, PACKAGES_DIR, "manifest.json"));
+                    
+                    JObject jsonObject = JObject.Parse(jsonText);
+                    JToken dependenciesValue = jsonObject.GetValue(PACKAGE_MANIFEST_DEPENDENCIES_KEY);
+                    
+                    if (dependenciesValue != null && dependenciesValue.Type == JTokenType.Object)
+                    {
+                        var dependencies = dependenciesValue.ToObject<Dictionary<string, string>>();
+                        if (dependencies.ContainsKey(packageName))
+                        {
+                            dependencies[packageName] = $"file:{this.packageResourceContainer.PackageDirectory}";
+                        }
+                        else
+                        {
+                            dependencies.Add(packageName, $"file:{this.packageResourceContainer.PackageDirectory}");
+                        }
+                        
+                        jsonObject[PACKAGE_MANIFEST_DEPENDENCIES_KEY] = JObject.FromObject(dependencies);
+                        string newJsonText = jsonObject.ToString(Formatting.Indented);
+                        File.WriteAllText(Path.Combine(this.packageResourceContainer.SimulationProjectDirectory, PACKAGES_DIR, "manifest.json"), newJsonText);
+                    }
+                    else
+                    {
+                        throw new Exception("Invalid manifest.json in simulation project");
+                    }
+
+                    if (File.Exists(Path.Combine(this.packageResourceContainer.SimulationProjectDirectory, PACKAGES_DIR, "packages-lock.json")))
+                        File.Delete(Path.Combine(this.packageResourceContainer.SimulationProjectDirectory, PACKAGES_DIR, "packages-lock.json"));
+                });
+
+                if (token.IsCancellationRequested)
+                {
+                    SendLogErrorToPackageTool($"Initialize simulation project : This job was canceled by user");
+                    return FAIL_CODE;
+                }
+
+                SendLogToPackageTool($"Initialize simulation project : {GetJobResult(SUCCESS_CODE)}");
+                return SUCCESS_CODE;
+            }
+            catch (Exception e)
+            {
+                SendLogErrorToPackageTool($"Initialize simulation project : {GetJobResult(FAIL_CODE)} ({e.Message})");
+                return FAIL_CODE;
+            }
+        }
+
+        public async Task<int> GetSimulateSyncGUIDs(bool useDefaultSyncCode, CancellationToken token)
         {
             SendLogToPackageTool("Unity simulation project synchronize GUIDs : Start");
             
@@ -315,10 +445,25 @@ namespace PackageManager
 
             try
             {
+                if (useDefaultSyncCode)
+                {
+                    await Task.Run(() => InjectCode(Path.Combine(this.packageResourceContainer.SimulationProjectDirectory,
+                        DEFAULT_SOURCE_INJECTION_DIR,
+                        DEFAULT_SYNC_SOURCE_FILENAME), this.defaultSyncSourceCode));
+                }
+
                 process.Start();
                 process.BeginOutputReadLine();
                 await Task.Run(() => process.WaitForExit());
-                SendLogToPackageTool($"Unity simulation project synchronize GUIDs : {GetJobResult(process.ExitCode)}");
+                if (process.ExitCode == FAIL_CODE)
+                {
+                    SendLogErrorToPackageTool($"Unity simulation project synchronize GUIDs : {GetJobResult(process.ExitCode)}");
+                }
+                else
+                {
+                    SendLogToPackageTool($"Unity simulation project synchronize GUIDs : {GetJobResult(process.ExitCode)}");
+                }
+
                 return process.ExitCode;
             }
             catch (Exception e)

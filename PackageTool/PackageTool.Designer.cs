@@ -42,6 +42,9 @@
             this.UnityEditorDirectoryField = new System.Windows.Forms.TextBox();
             this.PackageProjectDirectoryButton = new System.Windows.Forms.Button();
             this.PackagePropertyGroup = new System.Windows.Forms.GroupBox();
+            this.UseDefaultSyncGUIDMethodCheckBox = new System.Windows.Forms.CheckBox();
+            this.UseDefaultBuildSourceMethodCheckBox = new System.Windows.Forms.CheckBox();
+            this.CreateNewSettingButton = new System.Windows.Forms.Button();
             this.ContentListBox = new System.Windows.Forms.ListBox();
             this.LoadSettingButton = new System.Windows.Forms.Button();
             this.SaveSettingButton = new System.Windows.Forms.Button();
@@ -64,7 +67,6 @@
             this.columnLogHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.StartPackagingButton = new System.Windows.Forms.Button();
             this.StopPackagingButton = new System.Windows.Forms.Button();
-            this.CreateNewSettingButton = new System.Windows.Forms.Button();
             this.UnityProcessSettingGroup.SuspendLayout();
             this.PackagePropertyGroup.SuspendLayout();
             this.SuspendLayout();
@@ -200,6 +202,8 @@
             // 
             // PackagePropertyGroup
             // 
+            this.PackagePropertyGroup.Controls.Add(this.UseDefaultSyncGUIDMethodCheckBox);
+            this.PackagePropertyGroup.Controls.Add(this.UseDefaultBuildSourceMethodCheckBox);
             this.PackagePropertyGroup.Controls.Add(this.CreateNewSettingButton);
             this.PackagePropertyGroup.Controls.Add(this.ContentListBox);
             this.PackagePropertyGroup.Controls.Add(this.LoadSettingButton);
@@ -224,6 +228,40 @@
             this.PackagePropertyGroup.TabIndex = 1;
             this.PackagePropertyGroup.TabStop = false;
             this.PackagePropertyGroup.Text = "Package properties";
+            // 
+            // UseDefaultSyncGUIDMethodCheckBox
+            // 
+            this.UseDefaultSyncGUIDMethodCheckBox.AutoSize = true;
+            this.UseDefaultSyncGUIDMethodCheckBox.Enabled = false;
+            this.UseDefaultSyncGUIDMethodCheckBox.Location = new System.Drawing.Point(238, 74);
+            this.UseDefaultSyncGUIDMethodCheckBox.Name = "UseDefaultSyncGUIDMethodCheckBox";
+            this.UseDefaultSyncGUIDMethodCheckBox.Size = new System.Drawing.Size(199, 16);
+            this.UseDefaultSyncGUIDMethodCheckBox.TabIndex = 9;
+            this.UseDefaultSyncGUIDMethodCheckBox.Text = "Use Default Sync GUID Method";
+            this.UseDefaultSyncGUIDMethodCheckBox.UseVisualStyleBackColor = true;
+            this.UseDefaultSyncGUIDMethodCheckBox.CheckedChanged += new System.EventHandler(this.UseDefaultSyncGUIDMethodCheckBox_CheckedChanged);
+            // 
+            // UseDefaultBuildSourceMethodCheckBox
+            // 
+            this.UseDefaultBuildSourceMethodCheckBox.AutoSize = true;
+            this.UseDefaultBuildSourceMethodCheckBox.Enabled = false;
+            this.UseDefaultBuildSourceMethodCheckBox.Location = new System.Drawing.Point(238, 49);
+            this.UseDefaultBuildSourceMethodCheckBox.Name = "UseDefaultBuildSourceMethodCheckBox";
+            this.UseDefaultBuildSourceMethodCheckBox.Size = new System.Drawing.Size(210, 16);
+            this.UseDefaultBuildSourceMethodCheckBox.TabIndex = 8;
+            this.UseDefaultBuildSourceMethodCheckBox.Text = "Use Default Build Source Method";
+            this.UseDefaultBuildSourceMethodCheckBox.UseVisualStyleBackColor = true;
+            this.UseDefaultBuildSourceMethodCheckBox.CheckedChanged += new System.EventHandler(this.UseDefaultBuildSourceMethodCheckBox_CheckedChanged);
+            // 
+            // CreateNewSettingButton
+            // 
+            this.CreateNewSettingButton.Location = new System.Drawing.Point(336, 328);
+            this.CreateNewSettingButton.Name = "CreateNewSettingButton";
+            this.CreateNewSettingButton.Size = new System.Drawing.Size(124, 23);
+            this.CreateNewSettingButton.TabIndex = 7;
+            this.CreateNewSettingButton.Text = "Create new setting";
+            this.CreateNewSettingButton.UseVisualStyleBackColor = true;
+            this.CreateNewSettingButton.Click += new System.EventHandler(this.CreateNewSettingButton_Click);
             // 
             // ContentListBox
             // 
@@ -430,16 +468,6 @@
             this.StopPackagingButton.UseVisualStyleBackColor = true;
             this.StopPackagingButton.Click += new System.EventHandler(this.StopPackagingButton_Click);
             // 
-            // CreateNewSettingButton
-            // 
-            this.CreateNewSettingButton.Location = new System.Drawing.Point(336, 328);
-            this.CreateNewSettingButton.Name = "CreateNewSettingButton";
-            this.CreateNewSettingButton.Size = new System.Drawing.Size(124, 23);
-            this.CreateNewSettingButton.TabIndex = 7;
-            this.CreateNewSettingButton.Text = "Create new setting";
-            this.CreateNewSettingButton.UseVisualStyleBackColor = true;
-            this.CreateNewSettingButton.Click += new System.EventHandler(this.CreateNewSettingButton_Click);
-            // 
             // PackageTool
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
@@ -500,6 +528,8 @@
         private System.Windows.Forms.Button StartPackagingButton;
         private System.Windows.Forms.Button StopPackagingButton;
         private System.Windows.Forms.Button CreateNewSettingButton;
+        private System.Windows.Forms.CheckBox UseDefaultBuildSourceMethodCheckBox;
+        private System.Windows.Forms.CheckBox UseDefaultSyncGUIDMethodCheckBox;
     }
 }
 
