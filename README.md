@@ -4,7 +4,7 @@
 
 ![title](./img/main.png)
 
-Unity Dll 기반 Package 배포를 관리할 수 있도록 구현된 툴입니다.
+Unity Dll 기반 Package 배포를 관리할 수 있도록 구현된 툴입니다 (https://github.com/Kunnymann/unity-package-release-tool).
 
 ## 요약
 
@@ -36,7 +36,8 @@ Unity Dll 기반 Package 배포를 관리할 수 있도록 구현된 툴입니�
 3. Sync GUID Method : Process 인스턴스를 통해, Unity editor로 실행할 Get GUIDs method의 argument 값.
 
 ```
-2, 3번의 기본 설정을 활성화시키면, 프로그램이 각각 프로젝트로 기본 함수를 inject합니다. 기본 설정을 사용하지 않는다면, 각 프로젝트 별도로 함수들을 작성해 주셔야 합니다.
+2, 3번의 기본 설정을 활성화시키면, 프로그램이 각각 프로젝트로 기본 함수를 inject합니다.
+기본 설정을 사용하지 않는다면, 각 프로젝트 별도로 함수들을 작성해 주셔야 합니다.
 ```
 4. Content : Package내로 복사할 대상을 지정할 수 있습니다. 복사 방향에 따라, 5가지의 Content Type이 존재합니다.
     - Content Type
